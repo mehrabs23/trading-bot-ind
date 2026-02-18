@@ -22,7 +22,7 @@ def fetch_one(ticker: str, out: str, period: str = "5d", interval: str = "5m"):
     )
 
     if df is None or df.empty:
-        raise SystemExit(
+        raise ValueError(
             f"No data returned for {ticker}. Try --period 1d or try again later."
         )
 
@@ -31,13 +31,13 @@ def fetch_one(ticker: str, out: str, period: str = "5d", interval: str = "5m"):
     # Some versions use 'Datetime', some 'Date'
     ts_col = "Datetime" if "Datetime" in df.columns else ("Date" if "Date" in df.columns else None)
     if ts_col is None:
-        raise SystemExit(f"Could not find Datetime/Date column. Columns: {list(df.columns)}")
+        raise ValueError(f"Could not find Datetime/Date column. Columns: {list(df.columns)}")
 
     # Ensure the OHLCV columns exist
     need = ["Open", "High", "Low", "Close", "Volume"]
     for c in need:
         if c not in df.columns:
-            raise SystemExit(f"Missing column {c}. Columns: {list(df.columns)}")
+            raise ValueError(f"Missing column {c}. Columns: {list(df.columns)}")
 
     out_df = pd.DataFrame({
         "timestamp": pd.to_datetime(df[ts_col]).dt.strftime("%Y-%m-%dT%H:%M:%S"),
@@ -63,5 +63,6 @@ def main():
     fetch_one(args.ticker, args.out, args.period, args.interval)
 
 
-main()
+if __name__ == "__main__":
+    main()
 

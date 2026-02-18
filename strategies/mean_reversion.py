@@ -21,31 +21,45 @@ class MeanReversionStrategy(Strategy):
 
         dev = (px - sma) / sma
 
+        atr = self._atr(14)
+        avg_vol = self._avg_volume(20)
+        avg_val = avg_vol * px
+
+        meta = {
+            "sma": sma, 
+            "deviation": dev,
+            "atr": atr,
+            "avg_volume": avg_vol,
+            "avg_value": avg_val,
+        }
+
         # 1R stop default: 1% away (placeholder). We’ll later use ATR.
         if dev > self.threshold:
             stop = px * 1.01
             return Signal(
                 symbol=self.symbol,
+                timestamp=last.timestamp,
                 side=Side.SELL,
                 entry=px,
                 stop=stop,
                 targets=[sma],
                 confidence=min(abs(dev) * 10, 1.0),
                 reasoning=f"Mean-reversion SELL: close {px:.2f} is {dev*100:.2f}% above {self.lookback}SMA {sma:.2f}",
-                meta={"sma": sma, "deviation": dev},
+                meta=meta,
             )
 
         if dev < -self.threshold:
             stop = px * 0.99
             return Signal(
                 symbol=self.symbol,
+                timestamp=last.timestamp,
                 side=Side.BUY,
                 entry=px,
                 stop=stop,
                 targets=[sma],
                 confidence=min(abs(dev) * 10, 1.0),
                 reasoning=f"Mean-reversion BUY: close {px:.2f} is {abs(dev)*100:.2f}% below {self.lookback}SMA {sma:.2f}",
-                meta={"sma": sma, "deviation": dev},
+                meta=meta,
             )
 
         return None

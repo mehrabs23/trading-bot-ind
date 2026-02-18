@@ -19,6 +19,7 @@ class Engine:
         self.active: Optional[dict] = None  # {symbol, side, qty, entry, stop}
         self.trades: List[dict] = []
         self.signals: List[Signal] = []
+        self.equity_curve: List[dict] = []
 
     def _enter(self, sig: Signal, ts):
         if not self.risk.allow_entry_time(ts):
@@ -63,12 +64,19 @@ class Engine:
                 "reason": self.active["reason"],
                 "exit_tag": tag,
                 "pnl_est": (f.price - self.active["entry"]) * (qty if self.active["side"] == Side.BUY else -qty),
+                "exit_time": self.equity_curve[-1]["timestamp"] if self.equity_curve else None
             }
         )
         self.active = None
 
     def run(self, bars: List[MarketBar]):
         for bar in bars:
+            # Update equity curve first
+            self.equity_curve.append({
+                "timestamp": bar.timestamp,
+                "equity": self.portfolio.equity()
+            })
+
             sig = self.strategy.on_bar(bar)
 
             if self.mode == RunMode.SIGNAL:
@@ -95,12 +103,17 @@ class Engine:
         return self.summary()
 
     def summary(self):
+        wins = [t for t in self.trades if t['pnl_est'] > 0]
+        win_rate = len(wins) / len(self.trades) if self.trades else 0.0
+
         return {
             "final_equity": self.portfolio.equity(),
             "realized_pnl": self.portfolio.realized_pnl,
             "daily_realized": self.portfolio.daily_realized,
             "num_trades": len(self.trades),
+            "win_rate": win_rate,
             "trades": self.trades,
             "num_signals": len(self.signals),
+            "equity_curve": self.equity_curve,
         }
 
