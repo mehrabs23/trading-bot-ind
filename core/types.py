@@ -30,6 +30,7 @@ class MarketBar:
 @dataclass(frozen=True)
 class Signal:
     symbol: str
+    timestamp: datetime
     side: Side
     entry: float
     stop: float
