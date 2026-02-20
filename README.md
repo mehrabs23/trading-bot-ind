@@ -1,10 +1,10 @@
-# 📈 Trading Bot — Indian Markets (Intraday)
+# Trading Bot — Indian Markets (Intraday)
 
 An automated intraday signal generator and backtesting engine for Indian equities (NSE). Fetches live data from Yahoo Finance, runs multiple trading strategies across the NIFTY 50 universe, and presents actionable signals through a sleek web dashboard.
 
 ---
 
-## ✨ Features
+## Features
 
 | Feature | Description |
 |---------|-------------|
@@ -19,7 +19,7 @@ An automated intraday signal generator and backtesting engine for Indian equitie
 
 ---
 
-## 🚀 Quick Start
+## Quick Start
 
 ### 1. Clone & Install
 ```bash
@@ -55,7 +55,7 @@ Output: Interactive HTML report in `reports/backtests/`
 
 ---
 
-## 🖥️ Web Dashboard
+## Web Dashboard
 
 A dark-themed, real-time signal dashboard with sortable tables, strategy filters, and interactive candlestick charts.
 
@@ -66,15 +66,15 @@ cd dashboard
 ```
 
 **Features:**
-- 📊 Stats overview — total signals, BUY/SELL split, strategy breakdown
-- 🔍 Filters — by side (BUY/SELL) or strategy (MR/ORB/VWAP)
-- ↕️ Sortable columns — Symbol, Entry, Time, Confidence
-- 📈 Click any signal → candlestick chart with Entry/Stop/Target lines
-- 🔄 **Refresh button** — fetches fresh market data and regenerates signals live
+- Stats overview — total signals, BUY/SELL split, strategy breakdown
+- Filters — by side (BUY/SELL) or strategy (MR/ORB/VWAP)
+- Sortable columns — Symbol, Entry, Time, Confidence
+- Click any signal → candlestick chart with Entry/Stop/Target lines
+- **Refresh button** — fetches fresh market data and regenerates signals live
 
 ---
 
-## ⚡ Daily Automation
+## Daily Automation
 
 Run everything in one shot:
 
@@ -97,7 +97,7 @@ crontab -e
 
 ---
 
-## 📁 Project Structure
+## Project Structure
 
 ```
 trading-bot-ind/
@@ -139,7 +139,7 @@ trading-bot-ind/
 
 ---
 
-## 🎯 Strategies
+## Strategies
 
 ### Mean Reversion (MR)
 Signals when price deviates significantly from its 20-period SMA. BUY when oversold (below SMA by threshold), SELL when overbought.
@@ -152,7 +152,7 @@ Signals when price crosses VWAP with volume confirmation. BUY on reclaim from be
 
 ---
 
-## 📊 Signal Output Format
+## Signal Output Format
 
 Each signal includes:
 | Field | Description |
@@ -167,7 +167,7 @@ Each signal includes:
 
 ---
 
-## 🛠️ Configuration
+## Configuration
 
 | Argument | Default | Description |
 |----------|---------|-------------|
@@ -182,7 +182,7 @@ Each signal includes:
 
 ---
 
-## 📦 Dependencies
+## Dependencies
 
 ```
 pandas
@@ -197,6 +197,6 @@ Install all: `pip install -r requirements.txt`
 
 ---
 
-## ⚠️ Disclaimer
+## Disclaimer
 
 This bot is for **educational and research purposes only**. It does not place real trades. Always do your own analysis before making trading decisions. Past backtest performance does not guarantee future results.
