@@ -1,2 +1,6 @@
-# keep minimal for now
-
+pandas
+yfinance
+plotly
+flask
+matplotlib
+jinja2

@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Trading Signal Dashboard</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --surface: #161b22;
+      --surface2: #1c2128;
+      --border: #30363d;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --green: #3fb950;
+      --green-dim: #1a3a20;
+      --red: #f85149;
+      --red-dim: #3a1a1a;
+      --blue: #58a6ff;
+      --yellow: #d29922;
+      --purple: #bc8cff;
+      --accent: #238636;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    /* ── Header ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .logo-icon {
+      width: 36px;
+      height: 36px;
+      background: linear-gradient(135deg, #238636, #58a6ff);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 18px;
+    }
+
+    .logo h1 {
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .header-meta {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .header-meta span {
+      color: var(--blue);
+      font-weight: 500;
+    }
+
+    /* ── Layout ── */
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px 32px;
+    }
+
+    /* ── Stats Cards ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      transition: border-color 0.2s;
+    }
+
+    .stat-card:hover {
+      border-color: var(--blue);
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 8px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+    }
+
+    .stat-value.green {
+      color: var(--green);
+    }
+
+    .stat-value.red {
+      color: var(--red);
+    }
+
+    .stat-value.blue {
+      color: var(--blue);
+    }
+
+    .stat-value.yellow {
+      color: var(--yellow);
+    }
+
+    /* ── Filters ── */
+    .filters {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .filter-label {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .filter-btn {
+      padding: 6px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .filter-btn:hover,
+    .filter-btn.active {
+      background: var(--blue);
+      border-color: var(--blue);
+      color: #fff;
+    }
+
+    .filter-btn.buy.active {
+      background: var(--green);
+      border-color: var(--green);
+    }
+
+    .filter-btn.sell.active {
+      background: var(--red);
+      border-color: var(--red);
+    }
+
+    /* ── Main Grid ── */
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 20px;
+    }
+
+    @media (max-width: 1100px) {
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ── Signal Table ── */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .panel-title {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .panel-count {
+      font-size: 12px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2px 10px;
+      color: var(--text-muted);
+    }
+
+    .table-wrap {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    thead th {
+      padding: 10px 16px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      background: var(--surface2);
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    thead th:hover {
+      color: var(--text);
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+
+    tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: var(--surface2);
+    }
+
+    tbody tr.selected {
+      background: rgba(88, 166, 255, 0.08);
+      border-left: 3px solid var(--blue);
+    }
+
+    td {
+      padding: 12px 16px;
+      vertical-align: middle;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.03em;
+    }
+
+    .badge-buy {
+      background: var(--green-dim);
+      color: var(--green);
+    }
+
+    .badge-sell {
+      background: var(--red-dim);
+      color: var(--red);
+    }
+
+    .badge-mr {
+      background: rgba(188, 140, 255, 0.15);
+      color: var(--purple);
+    }
+
+    .badge-orb {
+      background: rgba(88, 166, 255, 0.15);
+      color: var(--blue);
+    }
+
+    .badge-vwap {
+      background: rgba(210, 153, 34, 0.15);
+      color: var(--yellow);
+    }
+
+    .conf-bar-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .conf-bar {
+      width: 60px;
+      height: 6px;
+      background: var(--border);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .conf-fill {
+      height: 100%;
+      border-radius: 3px;
+      background: linear-gradient(90deg, var(--blue), var(--green));
+    }
+
+    .conf-text {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .price-cell {
+      font-weight: 500;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stop-cell {
+      color: var(--red);
+      font-size: 12px;
+    }
+
+    .target-cell {
+      color: var(--green);
+      font-size: 12px;
+    }
+
+    .symbol-cell {
+      font-weight: 600;
+      font-size: 14px;
+    }
+
+    .time-cell {
+      color: var(--text-muted);
+      font-size: 12px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* ── Chart Panel ── */
+    .chart-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chart-placeholder {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      gap: 12px;
+      padding: 40px;
+      text-align: center;
+    }
+
+    .chart-placeholder .icon {
+      font-size: 48px;
+      opacity: 0.3;
+    }
+
+    .chart-placeholder p {
+      font-size: 14px;
+    }
+
+    #chart-container {
+      flex: 1;
+      min-height: 400px;
+    }
+
+    .chart-signal-info {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border);
+      display: none;
+    }
+
+    .signal-levels {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+
+    .level-item {
+      text-align: center;
+    }
+
+    .level-label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .level-value {
+      font-size: 16px;
+      font-weight: 600;
+      margin-top: 4px;
+    }
+
+    .level-value.entry {
+      color: var(--blue);
+    }
+
+    .level-value.stop {
+      color: var(--red);
+    }
+
+    .level-value.target {
+      color: var(--green);
+    }
+
+    .reasoning-text {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 8px;
+      line-height: 1.5;
+    }
+
+    /* ── Loading ── */
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 300px;
+      color: var(--text-muted);
+      gap: 10px;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border);
+      border-top-color: var(--blue);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* ── Empty state ── */
+    .empty-state {
+      padding: 60px 20px;
+      text-align: center;
+      color: var(--text-muted);
+    }
+
+    .empty-state .icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+    }
+
+    /* ── Refresh button ── */
+    .refresh-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 18px;
+      border-radius: 8px;
+      border: 1px solid var(--accent);
+      background: rgba(35, 134, 54, 0.15);
+      color: var(--green);
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: all 0.2s;
+    }
+
+    .refresh-btn:hover:not(:disabled) {
+      background: rgba(35, 134, 54, 0.3);
+    }
+
+    .refresh-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .refresh-btn .btn-spinner {
+      width: 14px;
+      height: 14px;
+      border: 2px solid rgba(63, 185, 80, 0.3);
+      border-top-color: var(--green);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: none;
+    }
+
+    .refresh-btn.loading .btn-spinner {
+      display: block;
+    }
+
+    .refresh-btn.loading .btn-icon {
+      display: none;
+    }
+
+    /* ── Toast ── */
+    #toast {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 14px 20px;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+      transform: translateY(80px);
+      opacity: 0;
+      transition: all 0.3s ease;
+      z-index: 999;
+      max-width: 320px;
+    }
+
+    #toast.show {
+      transform: translateY(0);
+      opacity: 1;
+    }
+
+    #toast.success {
+      border-color: var(--green);
+    }
+
+    #toast.error {
+      border-color: var(--red);
+    }
+
+    #toast.info {
+      border-color: var(--blue);
+    }
+
+    .toast-icon {
+      font-size: 16px;
+    }
+
+    .toast-msg {
+      flex: 1;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div class="logo">
+      <div class="logo-icon">📈</div>
+      <h1>Signal Dashboard</h1>
+    </div>
+    <div style="display:flex; align-items:center; gap:20px;">
+      <div class="header-meta" id="header-date">
+        {% if date_str %}
+        Generated: <span>{{ date_str }}</span>
+        {% else %}
+        <span style="color: var(--red)">No watchlist found — run the bot first</span>
+        {% endif %}
+      </div>
+      <button class="refresh-btn" id="refresh-btn" onclick="startRefresh()">
+        <span class="btn-spinner"></span>
+        <span class="btn-icon">⟳</span>
+        Refresh Signals
+      </button>
+    </div>
+  </header>
+
+  <!-- Toast notification -->
+  <div id="toast">
+    <span class="toast-icon" id="toast-icon">ℹ️</span>
+    <span class="toast-msg" id="toast-msg"></span>
+  </div>
+
+  <div class="container">
+
+    <!-- Stats -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Total Signals</div>
+        <div class="stat-value blue">{{ total }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Buy Signals</div>
+        <div class="stat-value green">{{ buys }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Sell Signals</div>
+        <div class="stat-value red">{{ sells }}</div>
+      </div>
+      {% for strat, count in strategies.items() %}
+      <div class="stat-card">
+        <div class="stat-label">{{ strat }}</div>
+        <div class="stat-value yellow">{{ count }}</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Filters -->
+    <div class="filters">
+      <span class="filter-label">Filter:</span>
+      <button class="filter-btn active" onclick="filterSignals('all', this)">All</button>
+      <button class="filter-btn buy" onclick="filterSignals('BUY', this)">BUY</button>
+      <button class="filter-btn sell" onclick="filterSignals('SELL', this)">SELL</button>
+      <button class="filter-btn" onclick="filterSignals('MR', this)">Mean Reversion</button>
+      <button class="filter-btn" onclick="filterSignals('ORB', this)">ORB</button>
+      <button class="filter-btn" onclick="filterSignals('VWAP', this)">VWAP</button>
+    </div>
+
+    <!-- Main Grid -->
+    <div class="main-grid">
+
+      <!-- Signal Table -->
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">Signals</span>
+          <span class="panel-count" id="visible-count">{{ total }} signals</span>
+        </div>
+        <div class="table-wrap">
+          {% if signals %}
+          <table id="signals-table">
+            <thead>
+              <tr>
+                <th onclick="sortTable('symbol')">Symbol ↕</th>
+                <th onclick="sortTable('time')">Time ↕</th>
+                <th>Side</th>
+                <th>Strategy</th>
+                <th onclick="sortTable('entry')">Entry ↕</th>
+                <th>Stop</th>
+                <th>Target</th>
+                <th onclick="sortTable('confidence')">Confidence ↕</th>
+              </tr>
+            </thead>
+            <tbody id="signals-body">
+              {% for sig in signals %}
+              {% set strat = sig.reasoning.split(']')[0].replace('[','').strip() if ']' in sig.reasoning else 'UNKNOWN'
+              %}
+              {% set target = sig.targets[0] if sig.targets else 0 %}
+              <tr data-symbol="{{ sig.symbol }}" data-side="{{ sig.side }}" data-strat="{{ strat }}"
+                data-entry="{{ sig.entry }}" data-stop="{{ sig.stop }}" data-target="{{ target }}"
+                data-confidence="{{ sig.confidence }}" data-reasoning="{{ sig.reasoning }}"
+                data-time="{{ sig.timestamp }}" onclick="selectSignal(this)">
+                <td class="symbol-cell">{{ sig.symbol }}</td>
+                <td class="time-cell">{{ sig.timestamp[11:16] }}</td>
+                <td><span class="badge badge-{{ sig.side | lower }}">{{ sig.side }}</span></td>
+                <td><span class="badge badge-{{ strat | lower }}">{{ strat }}</span></td>
+                <td class="price-cell">₹{{ "%.2f"|format(sig.entry) }}</td>
+                <td class="stop-cell">₹{{ "%.2f"|format(sig.stop) }}</td>
+                <td class="target-cell">₹{{ "%.2f"|format(target) }}</td>
+                <td>
+                  <div class="conf-bar-wrap">
+                    <div class="conf-bar">
+                      <div class="conf-fill" style="width: {{ (sig.confidence * 100)|int }}%"></div>
+                    </div>
+                    <span class="conf-text">{{ (sig.confidence * 100)|int }}%</span>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+          {% else %}
+          <div class="empty-state">
+            <div class="icon">📭</div>
+            <p>No signals found. Run <code>./run_daily.sh</code> to generate signals.</p>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Chart Panel -->
+      <div class="chart-panel panel">
+        <div class="panel-header">
+          <span class="panel-title" id="chart-title">Price Chart</span>
+        </div>
+        <div id="chart-container">
+          <div class="chart-placeholder">
+            <div class="icon">👆</div>
+            <p>Click a signal to view its price chart</p>
+          </div>
+        </div>
+        <div class="chart-signal-info" id="signal-info">
+          <div class="signal-levels">
+            <div class="level-item">
+              <div class="level-label">Entry</div>
+              <div class="level-value entry" id="info-entry">—</div>
+            </div>
+            <div class="level-item">
+              <div class="level-label">Stop</div>
+              <div class="level-value stop" id="info-stop">—</div>
+            </div>
+            <div class="level-item">
+              <div class="level-label">Target</div>
+              <div class="level-value target" id="info-target">—</div>
+            </div>
+          </div>
+          <div class="reasoning-text" id="info-reasoning"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    let currentFilter = 'all';
+    let sortCol = null;
+    let sortAsc = true;
+    let pollInterval = null;
+
+    // ── Toast ──────────────────────────────────────────────────────────────────
+    let toastTimer = null;
+    function showToast(msg, type = 'info') {
+      const icons = { info: 'ℹ️', success: '✅', error: '❌' };
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-msg').textContent = msg;
+      document.getElementById('toast-icon').textContent = icons[type] || 'ℹ️';
+      toast.className = `show ${type}`;
+      clearTimeout(toastTimer);
+      if (type !== 'info') toastTimer = setTimeout(() => toast.className = '', 4000);
+    }
+
+    // ── Live Refresh ───────────────────────────────────────────────────────────
+    function startRefresh() {
+      const btn = document.getElementById('refresh-btn');
+      btn.disabled = true;
+      btn.classList.add('loading');
+      showToast('Fetching latest market data…', 'info');
+
+      fetch('/refresh', { method: 'POST' })
+        .then(r => r.json())
+        .then(data => {
+          if (!data.ok) { showToast(data.message, 'error'); resetBtn(); return; }
+          pollInterval = setInterval(pollStatus, 2000);
+        })
+        .catch(() => { showToast('Could not start refresh.', 'error'); resetBtn(); });
+    }
+
+    function pollStatus() {
+      fetch('/refresh/status')
+        .then(r => r.json())
+        .then(s => {
+          if (s.status === 'running') {
+            showToast(s.message || 'Running…', 'info');
+          } else if (s.status === 'done') {
+            clearInterval(pollInterval);
+            showToast('Signals updated! Reloading table…', 'success');
+            reloadSignals();
+            resetBtn();
+          } else if (s.status === 'error') {
+            clearInterval(pollInterval);
+            showToast('Error: ' + s.message, 'error');
+            resetBtn();
+          }
+        });
+    }
+
+    function resetBtn() {
+      const btn = document.getElementById('refresh-btn');
+      btn.disabled = false;
+      btn.classList.remove('loading');
+    }
+
+    function reloadSignals() {
+      fetch('/signals')
+        .then(r => r.json())
+        .then(data => {
+          // Update header date
+          document.getElementById('header-date').innerHTML =
+            `Generated: <span>${data.generated}</span>`;
+
+          // Rebuild table body
+          const tbody = document.getElementById('signals-body');
+          tbody.innerHTML = data.signals.map(sig => {
+            const strat = sig.reasoning.includes(']')
+              ? sig.reasoning.split(']')[0].replace('[', '').trim()
+              : 'UNKNOWN';
+            const target = sig.targets && sig.targets.length ? sig.targets[0] : 0;
+            const conf = Math.round(sig.confidence * 100);
+            return `<tr
+            data-symbol="${sig.symbol}"
+            data-side="${sig.side}"
+            data-strat="${strat}"
+            data-entry="${sig.entry}"
+            data-stop="${sig.stop}"
+            data-target="${target}"
+            data-confidence="${sig.confidence}"
+            data-reasoning="${sig.reasoning.replace(/"/g, '&quot;')}"
+            data-time="${sig.timestamp}"
+            onclick="selectSignal(this)"
+          >
+            <td class="symbol-cell">${sig.symbol}</td>
+            <td class="time-cell">${sig.timestamp.substring(11, 16)}</td>
+            <td><span class="badge badge-${sig.side.toLowerCase()}">${sig.side}</span></td>
+            <td><span class="badge badge-${strat.toLowerCase()}">${strat}</span></td>
+            <td class="price-cell">₹${sig.entry.toFixed(2)}</td>
+            <td class="stop-cell">₹${sig.stop.toFixed(2)}</td>
+            <td class="target-cell">₹${target.toFixed(2)}</td>
+            <td>
+              <div class="conf-bar-wrap">
+                <div class="conf-bar"><div class="conf-fill" style="width:${conf}%"></div></div>
+                <span class="conf-text">${conf}%</span>
+              </div>
+            </td>
+          </tr>`;
+          }).join('');
+
+          applyFilter();
+          showToast(`${data.total} signals loaded (${data.buys} BUY / ${data.sells} SELL)`, 'success');
+        })
+        .catch(() => showToast('Failed to reload signals.', 'error'));
+    }
+
+    // ── Filters ────────────────────────────────────────────────────────────────
+    function filterSignals(filter, btn) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      applyFilter();
+    }
+
+    function applyFilter() {
+      const rows = document.querySelectorAll('#signals-body tr');
+      let visible = 0;
+      rows.forEach(row => {
+        const side = row.dataset.side;
+        const strat = row.dataset.strat;
+        let show = true;
+        if (currentFilter === 'BUY' && side !== 'BUY') show = false;
+        if (currentFilter === 'SELL' && side !== 'SELL') show = false;
+        if (['MR', 'ORB', 'VWAP'].includes(currentFilter) && strat !== currentFilter) show = false;
+        row.style.display = show ? '' : 'none';
+        if (show) visible++;
+      });
+      document.getElementById('visible-count').textContent = `${visible} signals`;
+    }
+
+    // ── Sort ───────────────────────────────────────────────────────────────────
+    function sortTable(col) {
+      if (sortCol === col) sortAsc = !sortAsc;
+      else { sortCol = col; sortAsc = true; }
+      const tbody = document.getElementById('signals-body');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      rows.sort((a, b) => {
+        let va = a.dataset[col === 'time' ? 'time' : col];
+        let vb = b.dataset[col === 'time' ? 'time' : col];
+        if (col === 'symbol') return sortAsc ? va.localeCompare(vb) : vb.localeCompare(va);
+        return sortAsc ? parseFloat(va) - parseFloat(vb) : parseFloat(vb) - parseFloat(va);
+      });
+      rows.forEach(r => tbody.appendChild(r));
+    }
+
+    // ── Chart ──────────────────────────────────────────────────────────────────
+    function selectSignal(row) {
+      document.querySelectorAll('#signals-body tr').forEach(r => r.classList.remove('selected'));
+      row.classList.add('selected');
+      const symbol = row.dataset.symbol;
+      const entry = parseFloat(row.dataset.entry);
+      const stop = parseFloat(row.dataset.stop);
+      const target = parseFloat(row.dataset.target);
+      const reasoning = row.dataset.reasoning;
+      document.getElementById('chart-title').textContent = `${symbol} — 5m Chart`;
+      document.getElementById('info-entry').textContent = `₹${entry.toFixed(2)}`;
+      document.getElementById('info-stop').textContent = `₹${stop.toFixed(2)}`;
+      document.getElementById('info-target').textContent = `₹${target.toFixed(2)}`;
+      document.getElementById('info-reasoning').textContent = reasoning;
+      document.getElementById('signal-info').style.display = 'block';
+      document.getElementById('chart-container').innerHTML = '<div class="loading"><div class="spinner"></div> Loading chart...</div>';
+      fetch(`/chart/${symbol}`)
+        .then(r => r.json())
+        .then(data => {
+          if (data.error) {
+            document.getElementById('chart-container').innerHTML = `<div class="chart-placeholder"><div class="icon">⚠️</div><p>${data.error}</p></div>`;
+            return;
+          }
+          renderChart(data, symbol, entry, stop, target);
+        })
+        .catch(() => {
+          document.getElementById('chart-container').innerHTML = '<div class="chart-placeholder"><div class="icon">⚠️</div><p>Failed to load chart data.</p></div>';
+        });
+    }
+
+    function renderChart(data, symbol, entry, stop, target) {
+      const candlestick = {
+        type: 'candlestick', x: data.timestamps,
+        open: data.open, high: data.high, low: data.low, close: data.close,
+        name: symbol,
+        increasing: { line: { color: '#3fb950' }, fillcolor: '#1a3a20' },
+        decreasing: { line: { color: '#f85149' }, fillcolor: '#3a1a1a' },
+      };
+      const last = data.timestamps[data.timestamps.length - 1];
+      const first = data.timestamps[0];
+      const shapes = [
+        { type: 'line', x0: first, x1: last, y0: entry, y1: entry, line: { color: '#58a6ff', width: 1.5, dash: 'dash' } },
+        { type: 'line', x0: first, x1: last, y0: stop, y1: stop, line: { color: '#f85149', width: 1.5, dash: 'dot' } },
+        { type: 'line', x0: first, x1: last, y0: target, y1: target, line: { color: '#3fb950', width: 1.5, dash: 'dot' } },
+      ];
+      const annotations = [
+        { x: last, y: entry, xref: 'x', yref: 'y', text: 'Entry', showarrow: false, font: { color: '#58a6ff', size: 11 }, xanchor: 'right' },
+        { x: last, y: stop, xref: 'x', yref: 'y', text: 'Stop', showarrow: false, font: { color: '#f85149', size: 11 }, xanchor: 'right' },
+        { x: last, y: target, xref: 'x', yref: 'y', text: 'Target', showarrow: false, font: { color: '#3fb950', size: 11 }, xanchor: 'right' },
+      ];
+      const layout = {
+        paper_bgcolor: '#161b22', plot_bgcolor: '#161b22',
+        font: { color: '#e6edf3', family: 'Inter, sans-serif', size: 12 },
+        margin: { t: 20, r: 20, b: 40, l: 60 },
+        xaxis: { gridcolor: '#30363d', linecolor: '#30363d', rangeslider: { visible: false }, type: 'category', tickangle: -45, nticks: 8 },
+        yaxis: { gridcolor: '#30363d', linecolor: '#30363d' },
+        shapes, annotations, showlegend: false,
+      };
+      document.getElementById('chart-container').innerHTML = '<div id="plotly-chart" style="height:400px"></div>';
+      Plotly.newPlot('plotly-chart', [candlestick], layout, { responsive: true, displayModeBar: false });
+    }
+  </script>
+
+</body>
+
+</html>
